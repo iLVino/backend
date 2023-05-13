@@ -15,7 +15,8 @@ export class AppController {
   }
 
   @Post('Processdata')
-  getContractInformation(@Body() body: ContractInformation) {
-    return this.appService.getContractInformation();
+  getContractInformation() {
+    const data = this.appService.getContractInformation(); //todo pipe this
+    return this.appService.getOpenAiResponse(data);
   }
 }
