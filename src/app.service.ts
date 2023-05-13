@@ -5,8 +5,11 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import axios from 'axios';
 import { error } from 'console';
 
-const CONTRACT_API_URL =
-  'https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=0x6982508145454ce325ddbe47a25d4ec3d2311933';
+const CONTRACT_API_URL = 'https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=0x6982508145454ce325ddbe47a25d4ec3d2311933';
+
+const OpenAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+const PromptAI = 'You are a crypto token security auditor and you are capable of breaking down complex inputs into simple explanation text . You will receive a json file which contains a report about a smart contract and you will point out the red flags. Based on this you create a score between 0 and 100 at the beginning of the conversation, where 100 is the safest and best possible result. Structure it in a best readable way, separate it into good and bad functions. Use headlines for each section and explain the critical points in a simple readable language. You are also capable of receiving further questions about this contract and answer those for the user. Always end a conversation with a call to action question to the user to keep him engaged. Here is the JSON:';
 
 @Injectable()
 export class AppService {
@@ -24,16 +27,29 @@ export class AppService {
     );
   }
   getOpenAiResponse(data: Observable<Contract>) {
-    return this.httpService.post(CONTRACT_API_URL).pipe(
+    return this.httpService.get(CONTRACT_API_URL).pipe(
       map((response: AxiosResponse<Contract>) => {
         return response.data;
       }),
       catchError((error: any) => {
         console.log(error);
         return throwError(error);
-      })
-    )
-   
+      }),
+    
+    async function generateText(inputText: string): Promise<string> {
+      const response = await axios.post(`${OpenAI_API_URL}/engines/davinci-codex/completions`, {
+        prompt: PromptAI + data,
+        max_tokens: 1000,
+        n: 1,
+        stop: ['\n']
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OpenAI_API_URL}`
+        }
+      });
+      return response.data.choices[0].text.trim();
+    })
   }
 }
 
