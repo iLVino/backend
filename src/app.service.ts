@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { Observable, catchError, map, throwError } from 'rxjs';
+import axios from 'axios';
 
 const CONTRACT_API_URL =
   'https://api.gopluslabs.io/api/v1/token_security/1?contract_addresses=0x6982508145454ce325ddbe47a25d4ec3d2311933';
@@ -71,3 +72,37 @@ export interface Contract {
   result: Record<string, ContractResult>;
 }
 
+
+async function getChatResponse(message: string): Promise<string> {
+  const apiUrl = 'https://api.openai.com/v1/chat/completions';
+  const apiKey = 'YOUR_API_KEY'; // Replace with your OpenAI API key
+
+  try {
+    const response = await axios.post(apiUrl, {
+      prompt: message,
+      max_tokens: 50, // Adjust the response length as needed
+      temperature: 0.6, // Adjust the temperature to control randomness
+      n: 1, // Number of responses to generate
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const chatResult = response.data.choices[0].text.trim();
+    return chatResult;
+  } catch (error) {
+    console.error('Error making the API call:', error);
+    throw error;
+  }
+}
+
+// Example usage
+async function main() {
+  const message = "Hello, how are you?";
+  const response = await getChatResponse(message);
+  console.log('ChatGPT response:', response);
+}
+
+main();
